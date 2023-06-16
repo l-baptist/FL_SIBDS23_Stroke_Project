@@ -1,3 +1,4 @@
+library(dplyr)
 ### table 1
 strokeyes <- filter(strokedata, strokedata$stroke==1)
 head(strokeyes)
