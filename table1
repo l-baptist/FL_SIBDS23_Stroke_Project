@@ -1,0 +1,89 @@
+### table 1
+strokeyes <- filter(strokedata, strokedata$stroke==1)
+head(strokeyes)
+nrow(strokeyes)
+nrow(strokeyes)/nrow(strokedata)
+strokeno <- filter(strokedata, strokedata$stroke==0)
+head(strokeno)
+nrow(strokeno)
+nrow(strokeno)/nrow(strokedata)
+
+# age
+round(mean(strokeyes$age),2)
+round(sd(strokeyes$age),2)
+round(mean(strokeno$age),2)
+round(sd(strokeno$age),2)
+t.test(strokeyes$age,strokeno$age)
+
+# gender
+gen1 <- table(strokeyes$gender)
+round(gen1/nrow(strokeyes),2)
+gen0 <- table(strokeno$gender)
+round(gen0/nrow(strokeno),2)
+genmat <- matrix(c(gen1,gen0[1:2]),nrow=2,byrow=T)
+chisq.test(genmat)
+
+#hypertension
+hyp1 <- table(strokeyes$hypertension)
+round(hyp1/nrow(strokeyes),2)
+hyp0 <- table(strokeno$hypertension)
+round(hyp0/nrow(strokeno),2)
+hypmat <- matrix(c(hyp1,hyp0),nrow=2,byrow=T)
+chisq.test(hypmat)
+
+#heart disease
+heart1 <- table(strokeyes$heart_disease)
+round(heart1/nrow(strokeyes),2)
+heart0 <- table(strokeno$heart_disease)
+round(heart0/nrow(strokeno),2)
+heartmat <- matrix(c(heart1,heart0),nrow=2,byrow=T)
+chisq.test(heartmat)
+
+#ever married
+mar1 <- table(strokeyes$ever_married)
+round(mar1/nrow(strokeyes),2)
+mar0 <- table(strokeno$ever_married)
+round(mar0/nrow(strokeno),2)
+marmat <- matrix(c(mar1,mar0),nrow=2,byrow=T)
+chisq.test(marmat)
+
+#work type
+work1 <- table(strokeyes$work_type)
+round(work1/nrow(strokeyes),2)
+work0 <- table(strokeno$work_type)
+round(work0/nrow(strokeno),2)
+workmat <- matrix(c(work1,work0[c(1:2,4:5)]),nrow=2,byrow=T)
+chisq.test(workmat)
+
+#residence type
+res1 <- table(strokeyes$residence_type)
+round(res1/nrow(strokeyes),2)
+res0 <- table(strokeno$residence_type)
+round(res0/nrow(strokeno),2)
+resmat <- matrix(c(res1,res0),nrow=2,byrow=T)
+chisq.test(resmat)
+
+# BMI
+round(mean(na.exclude(strokeyes$bmi)),2)
+x <- as.numeric(strokeyes$bmi)
+y <- as.numeric(strokeno$bmi)
+x <- na.omit(x)
+y <- na.omit(y)
+t.test(x=x,y=y)
+sd(x)
+sd(y)
+
+#smoker status
+smo1 <- table(strokeyes$smoking_status)
+round(smo1/nrow(strokeyes),2)
+smo0 <- table(strokeno$smoking_status)
+round(smo0/nrow(strokeno),2)
+smomat <- matrix(c(smo1,smo0),nrow=2,byrow=T)
+chisq.test(smomat)
+
+#glucose level
+round(mean(strokeyes$avg_glucose_level),2)
+round(sd(strokeyes$avg_glucose_level),2)
+round(mean(strokeno$avg_glucose_level),2)
+round(sd(strokeno$avg_glucose_level),2)
+t.test(strokeyes$avg_glucose_level,strokeno$avg_glucose_level)
