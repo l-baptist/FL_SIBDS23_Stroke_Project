@@ -104,3 +104,7 @@ strokemodel1=glm(stroke~gender+age+as.numeric(bmi)+as.factor(hypertension)+
                 +work_type+age*heart_disease,family=binomial,data=strokedata) %>%
   stepAIC(trace=F,direction='both')
 summary(strokemodel1)
+
+strokemodel2 <- glm(formula = stroke ~ age + as.numeric(bmi) + as.factor(hypertension) + 
+                     avg_glucose_level + heart_disease + age:as.numeric(bmi) + 
+                     age:heart_disease, family = binomial, data = strokedata)
