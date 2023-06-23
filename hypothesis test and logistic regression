@@ -108,3 +108,4 @@ summary(strokemodel1)
 strokemodel2 <- glm(formula = stroke ~ age + as.numeric(bmi) + as.factor(hypertension) + 
                      avg_glucose_level + heart_disease + age:as.numeric(bmi) + 
                      age:heart_disease, family = binomial, data = strokedata)
+summary(strokemodel2)
