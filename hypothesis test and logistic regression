@@ -93,20 +93,21 @@ t.test(strokeyes$avg_glucose_level,strokeno$avg_glucose_level)
 # logistic models and prediction
 strokemodel=glm(stroke~gender+age+as.numeric(bmi)+as.factor(hypertension)+
                   as.factor(heart_disease)+
-                  Residence_type+avg_glucose_level+ever_married+gender*age+age*as.numeric(bmi)
-                  +work_type+age*heart_disease,family=binomial,data=strokedata)
+                  Residence_type+avg_glucose_level+ever_married+gender:age+age:as.numeric(bmi)
+                  +work_type+age:as.factor(heart_disease),family=binomial,data=strokedata)
 summary(strokemodel)
 
 # use stepwise (AIC) regression for model
 strokemodel1=glm(stroke~gender+age+as.numeric(bmi)+as.factor(hypertension)+
                   as.factor(heart_disease)+
-                  Residence_type+avg_glucose_level+ever_married+gender*age+age*as.numeric(bmi)
-                +work_type+age*heart_disease,family=binomial,data=strokedata) %>%
+                  Residence_type+avg_glucose_level+ever_married+gender:age+age:as.numeric(bmi)
+                +work_type+age:as.factor(heart_disease),family=binomial,data=strokedata) %>%
   stepAIC(trace=F,direction='both')
 summary(strokemodel1)
 
+
 # full model
 strokemodel2 <- glm(formula = stroke ~ age + as.numeric(bmi) + as.factor(hypertension) + 
-                     avg_glucose_level + heart_disease + age:as.numeric(bmi) + 
-                     age:heart_disease, family = binomial, data = strokedata)
+                     avg_glucose_level + as.factor(heart_disease) + age:as.numeric(bmi) + 
+                     age:as.factor(heart_disease), family = binomial, data = strokedata)
 summary(strokemodel2)
