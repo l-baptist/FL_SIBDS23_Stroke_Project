@@ -1,0 +1,339 @@
+library(shinyWidgets)
+library(shiny)
+library(ggplot2)
+library(dplyr)
+
+ui <- fluidPage(
+ 
+    setBackgroundColor(
+    color = c("#87CEFA", "#FFFFF0"),
+    gradient = "radial",
+    direction = c("top", "left")
+  ),
+ 
+  # App title
+  titlePanel(h1("Predicting Stroke", align = "center")),
+ 
+ 
+  # Main Panel containing tabs and info on tabs
+  mainPanel(
+   
+   
+    # tabs 1 2 and 3
+   
+    tabsetPanel(type = "pills",
+               
+                # tab 1 for plots
+               
+                tabPanel("Visualization",
+                         
+                         #selecting variables for x axis input ID = xaxis
+                         
+                    sidebarLayout(
+                      sidebarPanel(
+                         selectInput("xaxis", "Select X-Variable:",
+                                     choices=c("gender" = "gender",
+                                               "age" = "age",
+                                               "hypertension" = "hypertension",
+                                               "heart_disease" = "heart_disease",
+                                               "ever_married" = "ever_married",
+                                               "work_type" = "work_type",
+                                               "residence_type" = "residence_type",
+                                               "smoking_status" = "smoking_status",
+                                               "stroke" = "stroke")),
+                         
+                         #br(),
+                         
+                         #selecting variables for y axis input ID = yaxis
+                         
+                         selectInput("yaxis", "Select Y-Variable:", c()),
+                         
+                         conditionalPanel(condition = c("input.xaxis == 'gender' && input.yaxis == 'age'"),
+                                          selectInput("fill1", "select fill variable", c("none","stroke"))),
+                         conditionalPanel(condition = "input.xaxis == 'ever_married' && input.yaxis == 'age'",
+                                          selectInput("fill2", "select fill variable", c("none","stroke"))),
+                         conditionalPanel(condition = "input.xaxis == 'age' && input.yaxis == 'avg_glucose_level'",
+                                          selectInput("fill3", "select fill variable", c("none","stroke"))),
+                         conditionalPanel(condition = "input.xaxis == 'work_type' && input.yaxis == 'age'",
+                                          selectInput("fill4", "select fill variable", c("none","stroke"))),
+                         conditionalPanel(condition = "input.xaxis == 'heart_disease' && input.yaxis == 'age'",
+                                          selectInput("fill5", "select fill variable", c("none","stroke"))),
+                         conditionalPanel(condition = "input.xaxis == 'stroke' && input.yaxis == 'bmi'",
+                                          selectInput("fill6", "select fill variable", c("none","gender"))),
+                         ),
+                         
+                         #plot based on selected variables
+                         mainPanel(
+                          plotOutput(outputId = "hist")
+                         )
+                )),
+               
+               
+                br(),
+               
+                # tab number 2 containing the t-test and chi sqr test
+               
+                tabPanel("Analysis",
+                     sidebarLayout(
+                           sidebarPanel(
+                              selectInput("model", "please select the model you would like to veiw", c("None","model_1","model_2", "model_3")),
+                             ),
+                         
+                         mainPanel(
+                           verbatimTextOutput("summary")
+                           )
+                         )),
+               
+                #tab number 3 containing the logistic regression model for predictions
+               
+                tabPanel("Prediction",
+                         sidebarLayout(
+                           sidebarPanel(
+                             numericInput("age", "please input your age:", 20, min = 0, max = 100),
+                             numericInput("average_glucose", "please input your average glucose:", 150, min = 50, max = 300),
+                             selectInput("hypertension", "please indicate if you have hypertension:", c("yes","no")),
+                             selectInput("heart_disease", "please indicate if you have heart disease:", c("yes","no")),
+                             actionButton("submit", "Predict!", icon = icon("refresh"))
+                             ),
+                         
+                         mainPanel(
+                          textOutput("text"))
+                         ))
+    )
+   
+  )
+)
+
+# Define server logic for random distribution app ----
+server <- function(session,input, output) {
+ 
+  observeEvent(input$xaxis, {
+    if (input$xaxis == "gender"){
+      updateSelectInput(session, inputId = "yaxis", choices = c("stroke","age") )
+    }
+    else if  (input$xaxis == "age"){
+      updateSelectInput(session, inputId = "yaxis", choices = c("stroke","bmi","avg_glucose_level") )
+    }
+    else if  (input$xaxis == "hypertension"){
+      updateSelectInput(session, inputId = "yaxis", choices = c("stroke") )
+    }
+    else if (input$xaxis == "ever_married"){
+      updateSelectInput(session, inputId = "yaxis", choices = c("stroke","age") )
+    }
+    else if (input$xaxis == "work_type"){
+      updateSelectInput(session, inputId = "yaxis", choices = c("stroke","age"))
+    }
+    else if (input$xaxis == "residence_type"){
+      updateSelectInput(session, inputId = "yaxis", choices = c("stroke"))
+    }
+    else if (input$xaxis == "heart_disease"){
+      updateSelectInput(session, inputId = "yaxis", choices = c("stroke","age"))
+    }
+    else if (input$xaxis == "smoking_status"){
+      updateSelectInput(session, inputId = "yaxis", choices = c("stroke"))
+    }
+    else if (input$xaxis == "stroke"){
+      updateSelectInput(session, inputId = "yaxis", choices = c("bmi"))
+    }
+   
+    else{
+      updateSelectInput(session, inputId = "yaxis", choices = c("NA") )
+    }
+  })
+   
+  
+  
+  
+  
+model_output <- reactive(if (input$model == "model_1"){
+                  summary(glm(stroke~gender+age+as.numeric(bmi)+as.factor(hypertension)+
+                  as.factor(heart_disease)+
+                  Residence_type+avg_glucose_level+ever_married+gender:age+age:as.numeric(bmi)
+                +work_type+age:as.factor(heart_disease),family=binomial,data=strokedata))
+                }
+  
+                else if (input$model == "model_2"){
+                     summary(glm(formula = stroke ~ age + as.numeric(bmi) + as.factor(hypertension) + 
+                     avg_glucose_level + as.factor(heart_disease) + age:as.numeric(bmi) + 
+                     age:as.factor(heart_disease), family = binomial, data = strokedata))
+                }
+                else if(input$model == "model_3"){
+                   summary(glm(formula = stroke ~ age + as.factor(hypertension) + 
+                     avg_glucose_level + as.factor(heart_disease) , family = binomial, data = strokedata))
+                }
+                else {
+                   paste("Please select a model")
+                })
+
+
+output$summary <- renderPrint(model_output())
+
+  
+pred_stroke <-  eventReactive(input$submit, {
+  
+  validate(
+    need(input$age >=0 && input$age <= 100, "Age must be between 0 and 100"),
+    need(input$average_glucose >=50 && input$average_glucose <= 300, " Average Glucose must be between 50 and 300")
+  )
+  
+  round((exp(((-7.489396) + (input$age * 0.068926)  + (ifelse(input$hypertension == "yes",  0.381410,    0))+ (input$average_glucose*0.004121) + (ifelse(input$heart_disease == "yes", 0.329965, 0)))))/(1+(exp(((-7.489396) + (input$age * 0.068926)  + (ifelse(input$hypertension == "yes",  0.381410,    0))+ (input$average_glucose*0.004121) + (ifelse(input$heart_disease == "yes", 0.329965, 0)))))),2)
+  
+  })
+                              
+                              
+
+output$text <- renderText({
+  paste("The probability of you getting stroke is",pred_stroke())
+})
+  
+   
+  
+  
+  Visuals <- reactive({
+    if (input$xaxis == "age" & input$yaxis == "stroke"){
+      stroke_by_age %>%
+        filter(stroke == "Yes") %>%
+        ggplot(mapping = aes(x = age, y = n)) + geom_point() +
+        geom_smooth(method = "loess", span = 0.3) +
+        labs(subtitle = "Age Distribution of Stroke", x = "Age", y = "Number of Strokes")
+    }
+    else if (input$xaxis == "age" & input$yaxis == "avg_glucose_level" &&  input$fill3 == "stroke"){
+      stroke_data %>%
+        ggplot(mapping = aes(x = age, y = avg_glucose_level, fill = stroke)) +
+        geom_smooth(method = "loess", span = 0.3 ) + labs(title = "Age Distribution - Average Glucose Level", x = "Age", y = "Average Glucose Level")
+    }
+   
+    else if (input$xaxis == "age" & input$yaxis == "bmi"){
+    stroke_data %>%
+      ggplot(mapping = aes(x = age, y = bmi, color = stroke)) +
+      geom_point(alpha = 0.5) + labs(title = "Age Distribution - BMI", x = "Age", y = "BMI")
+   
+    }
+   
+    else if (input$xaxis == "age" & input$yaxis == "avg_glucose_level"){
+      stroke_data %>%
+        ggplot(mapping = aes(x = age, y = avg_glucose_level)) +
+        geom_smooth(method = "loess", span = 0.3 ) + labs(title = "Age Distribution - Average Glucose Level", x = "Age", y = "Average Glucose Level")
+    }
+   
+    else if (input$xaxis == "gender" & input$yaxis == "age" && input$fill1 == "stroke"){
+      stroke_data %>%
+        ggplot(mapping = aes(x = gender, y = age, fill = stroke)) +
+        geom_boxplot() + labs(title = "Age Distribution - Male vs Female", x = "Gender", y = "Age")
+    }
+   
+    else if (input$xaxis == "gender" & input$yaxis == "age"){
+      stroke_data %>%
+        ggplot(mapping = aes(x = gender, y = age)) +
+        geom_boxplot() + labs(title = "Age Distribution - Male vs Female", x = "Gender", y = "Age")
+    }
+    else if (input$xaxis == "gender" & input$yaxis == "stroke"){
+      # group strokes by gender
+      stroke_data %>%
+        group_by(gender, stroke) %>%
+        count(stroke) %>%
+        ggplot(mapping = aes(x = gender, y = n, fill = stroke)) +
+        geom_bar(stat = "identity", position = "fill") + labs(title = "Percentage of Female vs Male", x = "Gender", y = "Percentage")
+    }
+    else if (input$xaxis == "ever_married" & input$yaxis == "age" && input$fill2 == "stroke"){
+      stroke_data %>%
+        ggplot(mapping = aes(x = ever_married, y = age, fill = stroke)) +
+        geom_boxplot() + labs(title = "Age Distribution - Ever Married", x = "Ever Married", y = "Age")
+    }
+   
+    else if (input$xaxis == "ever_married" & input$yaxis == "age"){
+      stroke_data %>%
+        ggplot(mapping = aes(x = ever_married, y = age)) +
+        geom_boxplot() + labs(title = "Age Distribution - Ever Married", x = "Ever Married", y = "Age")
+    }
+    else if (input$xaxis == "ever_married" & input$yaxis == "stroke"){
+    stroke_data %>%
+        group_by(ever_married, stroke) %>%
+        count(stroke) %>%
+        ggplot(mapping = aes(x = ever_married, y = n, fill = stroke)) +
+        geom_bar(stat = "identity", position = "fill") + labs(title = "Unmarried vs Married", x = "Ever Married", y = "Percentage")
+    }
+    else if (input$xaxis == "work_type" & input$yaxis == "age" && input$fill4 == "stroke"){
+      stroke_data %>%
+        ggplot(mapping = aes(x = work_type, y = age, fill = stroke)) +
+        geom_boxplot() + labs(title = "Age Distribution - Work Type", x = "Work Type", y = "Age")
+    }
+    else if (input$xaxis == "work_type" & input$yaxis == "age"){
+      stroke_data %>%
+        ggplot(mapping = aes(x = work_type, y = age)) +
+        geom_boxplot() + labs(title = "Age Distribution - Work Type", x = "Work Type", y = "Age")
+    }
+    else if (input$xaxis == "work_type" & input$yaxis == "stroke"){
+      stroke_data %>%
+        group_by(work_type, stroke) %>%
+        count(stroke)%>%
+        ggplot(mapping = aes(x = work_type, y = n, fill = stroke)) +
+        geom_bar(stat = "identity", position = "fill") + labs(title = "Which Work Type is More at Risk of Getting a Stroke?", x = "Work Type", y = "Percentage")
+    }
+    else if (input$xaxis == "residence_type" & input$yaxis == "stroke"){
+      stroke_data %>%
+        group_by(residence_type, stroke) %>%
+        count(stroke)%>%
+        ggplot(mapping = aes(x = residence_type, y = n, fill = stroke)) +
+        geom_bar(stat = "identity", position = "fill") + labs(title = "Urban vs Rural", x = "Residence Type", y = "Percentage")
+    }
+ 
+    else if (input$xaxis == "hypertension" & input$yaxis == "stroke"){
+      stroke_data %>%
+        group_by(hypertension, stroke) %>%
+        count(stroke) %>%
+        ggplot(mapping = aes(x = hypertension, y = n, fill = stroke)) +
+        geom_bar(stat = "identity", position = "fill") + labs(title = "Percentage of Without Hypertension vs With Hypertension", x = "Hypertension", y = "Percentage")
+    }
+    else if (input$xaxis == "heart_disease" & input$yaxis == "age" && input$fill5 == "stroke") {
+      stroke_data %>%
+        ggplot(mapping = aes(x = heart_disease, y = age, fill = stroke)) +
+        geom_boxplot() + labs(title = "Age Distribution - Heart Disease", x = "Heart Disease", y = "Age")
+    }
+    else if (input$xaxis == "heart_disease" & input$yaxis == "age") {
+      stroke_data %>%
+        ggplot(mapping = aes(x = heart_disease, y = age)) +
+        geom_boxplot() + labs(title = "Age Distribution - Heart Disease", x = "Heart Disease", y = "Age")
+    }
+    else if (input$xaxis == "heart_disease" & input$yaxis == "stroke") {
+      stroke_data %>%
+        group_by(heart_disease, stroke) %>%
+        count(stroke) %>%
+        ggplot(mapping = aes(x = heart_disease, y = n, fill = stroke)) +
+        geom_bar(stat = "identity", position = "fill") + labs(title = "Percentage of Without Heart Disease vs With Heart Disease", x = "Heart Disease", y = "Percentage")
+    }
+    else if (input$xaxis == "smoking_status" & input$yaxis == "stroke"){
+     stroke_data %>%
+        group_by(smoking_status, stroke) %>%
+        count(stroke)%>%
+        ggplot(mapping = aes(x = smoking_status, y = n, fill = stroke)) +
+        geom_bar(stat = "identity", position = "fill") + labs(title = "Percentage by Smoking Status", x = "Smoking Status", y = "Percentage")
+    }
+    else if (input$xaxis == "stroke" & input$yaxis == "bmi" && input$fill6 == "gender") {
+      stroke_data %>%
+        ggplot(mapping = aes(x = stroke, y = bmi, fill = stroke, color = gender)) +
+        geom_boxplot() + labs(title = "BMI Boxplot", x = "Stroke", y = "BMI")
+     
+    }
+    else if (input$xaxis == "stroke" & input$yaxis == "bmi") {
+      stroke_data %>%
+        ggplot(mapping = aes(x = stroke, y = bmi, fill = stroke)) +
+        geom_boxplot() + labs(title = "BMI Boxplot", x = "Stroke", y = "BMI")
+     
+    }
+    else{ggplot(data = stroke, mapping = aes(x=stroke,y=age))+geom_point(colour='red')
+     
+    }
+  })
+ 
+ 
+  output$hist <- renderPlot({
+    Visuals()
+  })
+ 
+             
+ 
+}
+
+# Create Shiny app ----
+shinyApp(ui=ui, server=server)
