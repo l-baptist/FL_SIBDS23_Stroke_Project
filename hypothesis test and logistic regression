@@ -1,4 +1,5 @@
 library(dplyr)
+library(MASS)
 
 strokeyes <- filter(strokedata, strokedata$stroke==1)
 head(strokeyes)
@@ -88,3 +89,18 @@ round(sd(strokeyes$avg_glucose_level),2)
 round(mean(strokeno$avg_glucose_level),2)
 round(sd(strokeno$avg_glucose_level),2)
 t.test(strokeyes$avg_glucose_level,strokeno$avg_glucose_level)
+
+# logistic models and prediction
+strokemodel=glm(stroke~gender+age+as.numeric(bmi)+as.factor(hypertension)+
+                  as.factor(heart_disease)+
+                  Residence_type+avg_glucose_level+ever_married+gender*age+age*as.numeric(bmi)
+                  +work_type+age*heart_disease,family=binomial,data=strokedata)
+summary(strokemodel)
+
+# use stepwise (AIC) regression for model
+strokemodel1=glm(stroke~gender+age+as.numeric(bmi)+as.factor(hypertension)+
+                  as.factor(heart_disease)+
+                  Residence_type+avg_glucose_level+ever_married+gender*age+age*as.numeric(bmi)
+                +work_type+age*heart_disease,family=binomial,data=strokedata) %>%
+  stepAIC(trace=F,direction='both')
+summary(strokemodel1)
