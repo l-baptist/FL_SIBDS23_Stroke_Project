@@ -7,7 +7,7 @@ library(tidyr)
 library(dplyr)
 library(Hmisc)
 
-# read in data
+# read in data PUT THE PATH WHERE YOU SAVED THE FILE
 data <- read.csv("/Users/janneese/Desktop/healthcare-dataset-stroke-data.csv")
 
 # mutate data so visuals are easier to read
